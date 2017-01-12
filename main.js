@@ -1,9 +1,18 @@
+const emptyColor = 'white';
+const top100Color = '#004b00'; //nearly dark green
+const top50Color = 'green';
+const bottom10Color = 'red';
+const range10Color = 'yellow';
+const range40Color = 'orange';
+
 function txPieChart(data, elementId){
 
 
 };
 
-class txPieChar {
+class TxPieChar {
+
+
 	constructor(rawData, elementId, ...drawAttrs){
 		this.rawData = rawData;
 		this.elementId = elementId;
@@ -68,8 +77,10 @@ class txPieChar {
 		    .dimension(groupDim)
 		    .group(countAttr)
 		    .legend(dc.legend())
-		    .ordinalColors(['black', 'blue', 'green', 'gray', 'yellow', 'red'])
+		    .ordinalColors([emptyColor, bottom10Color, range10Color, range40Color, top50Color, top100Color]) //the first one is OTHERS
 		;
+
+		this._chart.render();
 	}
 
 }
@@ -118,38 +129,40 @@ fetch('data.json').then(res =>{
 		cat.pieGroup = pieGroup;
 	});
 
-	var chart = dc.pieChart("#sales-by-category-pie-chart");
-
-	var ndx = crossfilter(categories);
-
-	groupDimension = ndx.dimension(function(d){
-		// return `top ${d.pieGroup}`;
-		return d.pieGroup;
-	})
-	countX = groupDimension.group().reduceSum(function(d){
-		return d.total;
-	});
-
-	chart
-		.width(768)
-		.height(480)
-		// .slicesCap(5)
-		.innerRadius(100)
-		.dimension(groupDimension)
-		.group(countX)
-		.legend(dc.legend())
-		.ordinalColors(['black', 'blue', 'green', 'gray', 'yellow', 'red'])
-		// workaround for #703: not enough data is accessible through .label() to display percentages
-		.on('pretransition', function(chart){
-			chart.selectAll('text.pie-slice').text(function(d){
-				// return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
-				// console.log(d);
-				// console.log(d.data);
-				let label = d.data.key;
-				return label + ' ' + Number(d.value).toFixed(2);
-			})
-		})
-	;
-
-	chart.render();
+	// var chart = dc.pieChart("#sales-by-category-pie-chart");
+	//
+	// var ndx = crossfilter(categories);
+	//
+	// groupDimension = ndx.dimension(function(d){
+	// 	// return `top ${d.pieGroup}`;
+	// 	return d.pieGroup;
+	// })
+	// countX = groupDimension.group().reduceSum(function(d){
+	// 	return d.total;
+	// });
+	//
+	// chart
+	// 	.width(768)
+	// 	.height(480)
+	// 	// .slicesCap(5)
+	// 	.innerRadius(100)
+	// 	.dimension(groupDimension)
+	// 	.group(countX)
+	// 	.legend(dc.legend())
+	// 	.ordinalColors(['black', 'blue', 'green', 'gray', 'yellow', 'red'])
+	// 	// workaround for #703: not enough data is accessible through .label() to display percentages
+	// 	.on('pretransition', function(chart){
+	// 		chart.selectAll('text.pie-slice').text(function(d){
+	// 			// return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
+	// 			// console.log(d);
+	// 			// console.log(d.data);
+	// 			let label = d.data.key;
+	// 			return label + ' ' + Number(d.value).toFixed(2);
+	// 		})
+	// 	})
+	// ;
+	//
+	// chart.render();
+	txPieChart = new TxPieChar(categories, 'sales-by-category-pie-chart', 'total', 'quantity');
+	txPieChart.render('total');
 });
