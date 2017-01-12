@@ -13,9 +13,10 @@ function txPieChart(data, elementId){
 class TxPieChar {
 
 
-	constructor(rawData, elementId, ...drawAttrs){
+	constructor(rawData, elementId, labelBy, ...drawAttrs){
 		this.rawData = rawData;
 		this.elementId = elementId;
+		this.labelBy = labelBy;
 		drawAttrs = drawAttrs.length > 0 ? drawAttrs : ['total'];
 		this.drawAttrs = drawAttrs;
 
@@ -23,7 +24,7 @@ class TxPieChar {
 	}
 
 	_sortTop5(attr){
-		this.rawData.sort((a, b) => {
+		this.rawData.sort((a, b) =>{
 			if(a[attr] > b[attr]){
 				return -1;
 			}
@@ -37,7 +38,7 @@ class TxPieChar {
 		});
 
 
-		this.rawData.forEach((c, i) => {
+		this.rawData.forEach((c, i) =>{
 			let pieGroup = i;
 			if(i > 4){
 				pieGroup = 5;
@@ -52,8 +53,8 @@ class TxPieChar {
 	}
 
 	_cleanData(){
-		this.rawData.forEach(c => {
-			this.drawAttrs.forEach(attr => {
+		this.rawData.forEach(c =>{
+			this.drawAttrs.forEach(attr =>{
 				c[attr] ? (c[attr] = Number(c[attr])) : false;
 			});
 		});
@@ -62,13 +63,15 @@ class TxPieChar {
 	render(attr){
 		this._sortTop5(attr);
 		let ndx = crossfilter(this.rawData);
-		let groupDim = ndx.dimension((d) => {
+		let groupDim = ndx.dimension((d) =>{
 			return d.pieGroup;
 		});
 
-		let countAttr = groupDim.group().reduceSum(d => {
+		let countAttr = groupDim.group().reduceSum(d =>{
 			return d[attr];
 		});
+
+		let txPieChart = this;
 
 		this._chart
 		    .width(768)
@@ -76,13 +79,57 @@ class TxPieChar {
 		    .innerRadius(100)
 		    .dimension(groupDim)
 		    .group(countAttr)
-		    .legend(dc.legend())
+		    .legend(dc.legend().legendText(dcPieObj => {
+			    let suffix = '';
+			    if(attr == 'total'){
+				    suffix = '$';
+			    }
+
+			    return suffix + Number(dcPieObj.data).toFixed(2);
+		    }))
 		    .ordinalColors([emptyColor, bottom10Color, range10Color, range40Color, top50Color, top100Color]) //the first one is OTHERS
+		    /** @BUGGS
+		     */
+		    // .label(d => {
+		    //      // d ONLY ASSOCIATE WITH
+		    //      // {
+		    //      //      key: 0, //group
+		    //      //      value: 192.65
+		    //      // }
+		    //      // console.log(d);
+		    // 	let label = 'Others';
+		    //
+		    // 	let cIndex = d.key;
+		    // 	console.log(cIndex); // 0 1 2 5, NO 3 4, BUGSSSS
+		    // 	if(cIndex < 5){
+		    // 		label = this.rawData[cIndex][this.labelBy];
+		    // 	}
+		    //
+		    // 	console.log(label);
+		    //
+		    // 	return `${label}: ${Number(d.value).toFixed(2)}`;
+		    // })
+		    // workaround for #703: not enough data is accessible through .label() to display percentages
+		    .on('pretransition', chart =>{
+			    chart.selectAll('text.pie-slice').text(function(d){
+				    d = d.data; //restore as normal d {key: 0, value: 195.56}
+
+				    let label = 'Others';
+
+				    let cIndex = d.key;
+				    // console.log(cIndex); // 0 1 2 5, NO 3 4, BUGSSSS
+				    if(cIndex < 5){
+					    label = txPieChart.rawData[cIndex][txPieChart.labelBy];
+				    }
+
+				    return `${label}: ${Number(d.value).toFixed(2)}`;
+			    })
+		    })
+
 		;
 
 		this._chart.render();
 	}
-
 }
 ;
 fetch('data.json').then(res =>{
@@ -163,6 +210,10 @@ fetch('data.json').then(res =>{
 	// ;
 	//
 	// chart.render();
-	txPieChart = new TxPieChar(categories, 'sales-by-category-pie-chart', 'total', 'quantity');
+	txPieChart = new TxPieChar(categories, 'sales-by-category-pie-chart', 'display_name', 'total', 'quantity');
 	txPieChart.render('total');
+
+	document.addEventListener('click', function(){
+		txPieChart.render('quantity');
+	});
 });
