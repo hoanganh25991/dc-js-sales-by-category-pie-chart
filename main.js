@@ -322,6 +322,7 @@ fetch('data.json').then(res =>{
 		.dimension(groupDimension)
 		.group(countX)
 		.legend(dc.legend())
+		.ordinalColors(['black', 'blue', 'green', 'gray', 'yellow', 'red'])
 	// workaround for #703: not enough data is accessible through .label() to display percentages
 		.on('pretransition', function(chart) {
 			chart.selectAll('text.pie-slice').text(function(d) {
